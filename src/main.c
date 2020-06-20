@@ -1,4 +1,5 @@
 #include <logging/log.h>
+#include <random/rand32.h>
 
 #include <tss2/tss2_esys.h>
 #include <tss2/tss2_tctildr.h>
@@ -15,6 +16,19 @@ LOG_MODULE_REGISTER(tpm2, LOG_LEVEL_DBG);
             LOG_ERR("Line %i: "m, __LINE__); \
             goto d;                          \
           }
+
+// Glue mbedTLS entropy source to K64 RNG (nxp,kinetis-rnga)
+int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t *olen ) {
+    (void)data;
+    *olen = 0;
+
+    if(sys_csrand_get(output, len) != 0) {
+      return -1;
+    }
+
+    *olen = len;
+    return 0;
+}
 
 //=== copied from tpm2-tss/test/integration/esys-get-random.int.c =============
 int
