@@ -1,0 +1,52 @@
+manifest:
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+
+    - name: anticat
+      url-base: https://github.com/drandreas
+
+  projects:
+    - name: cmsis
+      remote: zephyrproject-rtos
+      revision: 542b2296e6d515b265e25c6b7208e8fea3014f90
+      path: modules/hal/cmsis
+
+    - name: hal-nxp
+      remote: zephyrproject-rtos
+      revision: 80a337dc4cc980f80e595971147eb41458b29ae8
+      path: modules/hal/nxp
+
+    - name: mbedtls
+      remote: zephyrproject-rtos
+      revision: 821154171b246f64eaeef3ccc267f58d8274739a
+      path: modules/crypto/mbedtls
+
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: d81be8fd9c3df83e0102b208c69a544a7d36a200
+      path: zephyr
+      west-commands: scripts/west-commands.yml
+
+    - name: tpm-tis-spi
+      remote: anticat
+      revision: master
+      path: modules/drv/tpm-tis-spi
+
+    - name: tpm2-tss
+      remote: anticat
+      revision:  master
+      path: modules/lib/tpm2-tss/import
+
+    - name: tpm2-tss-zephyr
+      remote: anticat
+      revision: master
+      path: modules/lib/tpm2-tss
+
+    - name: dts-search-extension
+      remote: anticat
+      revision: master
+      path: dts-search-extension
+
+  self:
+      path: zephyr-tpm2-poc
