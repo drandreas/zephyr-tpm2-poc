@@ -12,7 +12,7 @@ manifest:
       revision: 542b2296e6d515b265e25c6b7208e8fea3014f90
       path: modules/hal/cmsis
 
-    - name: hal-nxp
+    - name: hal_nxp
       remote: zephyrproject-rtos
       revision: 80a337dc4cc980f80e595971147eb41458b29ae8
       path: modules/hal/nxp
