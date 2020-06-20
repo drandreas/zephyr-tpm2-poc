@@ -23,6 +23,13 @@ on an [NXP FRDM-K64F](https://docs.zephyrproject.org/latest/boards/arm/frdm_k64f
 but should work with any MCU - TPM 2.0 combination as long as the SPI-subsystem
 does not release the chip-select between consecutive transfers.
 
+## Software Requirements
+- [Zephyr](https://github.com/zephyrproject-rtos)
+- [TPM TIS](https://github.com/drandreas/tpm-tis-spi)
+- [TPM2 TSS](https://github.com/drandreas/tpm2-tss)
+- [TPM2 TSS Zephyr](https://github.com/drandreas/tpm2-tss-zephyr)
+- [Zephyr DTS Search Extension](https://github.com/drandreas/dts-search-extension) (Optional)
+
 ## Checkout using WEST
 ```
 west init -m https://github.com/drandreas/zephyr-tpm2-poc.git zephyr-tpm2-poc
