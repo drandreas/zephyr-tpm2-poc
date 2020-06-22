@@ -36,11 +36,20 @@ west init -m https://github.com/drandreas/zephyr-tpm2-poc.git zephyr-tpm2-poc
 cd zephyr-tpm2-poc
 west update
 ```
-## Build and Flash App
+## Build and flash
 ```
 west build -p -b frdm_k64f zephyr-tpm2-poc
 west flash
 ```
+
+## Aproximate memory and flash size
+```
+Memory region         Used Size  Region Size  %age Used
+           FLASH:       92384 B         1 MB      8.81%
+            SRAM:       11776 B       192 KB      5.99%
+        IDT_LIST:         104 B         2 KB      5.08%
+```
+Note: The heap size, a couple of kB, is not included in this numbers.
 
 ## Expected output
 ```
