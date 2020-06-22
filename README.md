@@ -42,3 +42,18 @@ west build -p -b frdm_k64f zephyr-tpm2-poc
 west flash
 ```
 
+## Expected output
+```
+*** Booting Zephyr OS build zephyr-v2.3.0-9-gd81be8fd9c3d  ***
+[00:00:00.261,000] <inf> tpm_tis_spi: TPM 2.0 (device-id 0x1b, rev-id 16)
+[00:00:00.415,000] <inf> tpm2: GetRandom Test Passed!
+[00:00:02.021,000] <inf> tpm2: GetRandom with session Test Passed!
+[00:00:02.021,000] <inf> tpm2: RSA key will be created.
+[00:01:48.318,000] <inf> tpm2: RSA-Encrypt-Decrypt Test Passed!
+[00:01:48.472,000] <inf> tpm2: ECC key will be created.
+[00:01:49.348,000] <inf> tpm2: ECDH-Keygen Test Passed!
+[00:01:49.348,000] <inf> tpm2: RSA key will be created.
+[00:02:01.214,000] <inf> tpm2: RSA Certify Test Passed!
+[00:02:01.214,000] <inf> tpm2: RSA key will be created.
+[00:02:40.250,000] <inf> tpm2: RSA Verify Test Passed!
+```
