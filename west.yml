@@ -17,17 +17,17 @@ manifest:
 
     - name: hal_nxp
       remote: zephyrproject-rtos
-      revision: 80a337dc4cc980f80e595971147eb41458b29ae8
+      revision: 7276046215cfcd4ed3d6723f16f7aeb868b0fb60
       path: modules/hal/nxp
 
     - name: mbedtls
       remote: zephyrproject-rtos
-      revision: 821154171b246f64eaeef3ccc267f58d8274739a
+      revision: 4bf099f1254332d16dcd931ccea0a88d24a7d3c7
       path: modules/crypto/mbedtls
 
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: d81be8fd9c3df83e0102b208c69a544a7d36a200
+      revision: af944ff6657b7e51e85a483689652d3e6abb3bf6
       path: zephyr
       west-commands: scripts/west-commands.yml
 
@@ -45,11 +45,6 @@ manifest:
       remote: anticat
       revision: master
       path: modules/lib/tpm2-tss
-
-    - name: dts-search-extension
-      remote: anticat
-      revision: master
-      path: dts-search-extension
 
   self:
       path: zephyr-tpm2-poc

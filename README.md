@@ -28,7 +28,6 @@ does not release the chip-select between consecutive transfers.
 - [TPM TIS](https://github.com/drandreas/tpm-tis-spi)
 - [TPM2 TSS](https://github.com/tpm2-software/tpm2-tss)
 - [TPM2 TSS Zephyr](https://github.com/drandreas/tpm2-tss-zephyr)
-- [Zephyr DTS Search Extension](https://github.com/drandreas/dts-search-extension) (Optional)
 
 ## Checkout using WEST
 ```
