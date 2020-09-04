@@ -17,17 +17,17 @@ manifest:
 
     - name: hal_nxp
       remote: zephyrproject-rtos
-      revision: 7276046215cfcd4ed3d6723f16f7aeb868b0fb60
+      revision: e13b23c06850530c6c34208905d58e7a6a12cdd5
       path: modules/hal/nxp
 
     - name: mbedtls
       remote: zephyrproject-rtos
-      revision: 4bf099f1254332d16dcd931ccea0a88d24a7d3c7
+      revision: 9638398d3c319074ae3878035138ef8a76001e5b
       path: modules/crypto/mbedtls
 
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: af944ff6657b7e51e85a483689652d3e6abb3bf6
+      revision: 4eba946e2bb1fe97b2a9ac65c4c85400f87e226a
       path: zephyr
       west-commands: scripts/west-commands.yml
 
