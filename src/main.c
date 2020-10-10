@@ -1,8 +1,9 @@
 #include <logging/log.h>
 #include <random/rand32.h>
 
-#include <tss2/tss2_esys.h>
 #include <tss2/tss2_tctildr.h>
+#include <tss2/tss2_tcti_zephyr.h>
+#include <tss2/tss2_esys.h>
 
 // Loglevel of main function
 LOG_MODULE_REGISTER(tpm2, LOG_LEVEL_DBG);
@@ -886,7 +887,9 @@ test_esys_verify_signature(ESYS_CONTEXT * esys_context)
 
 //=== execute tests ===========================================================
 void main() {
-  TSS2_RC      ret       = 0;
+  TSS2_RC ret = 0;
+  size_t size = 0;
+  TSS2_TCTI_CONTEXT *tcti_ctx = NULL;
   ESYS_CONTEXT *esys_ctx = NULL;
 
   TSS2_ABI_VERSION abi_version = {
@@ -896,34 +899,69 @@ void main() {
     .tssVersion = 108,
   };
 
-  ret = Esys_Initialize(&esys_ctx, NULL, &abi_version);
-
+  // Zephyr_Init is called w/o a ptr, it returns the tcti_ctx size
+  ret = Tss2_Tcti_Zephyr_Init(NULL, &size, NULL);
   if(ret != TPM2_RC_SUCCESS) {
-    LOG_ERR("Failed to init tpm e-sys-api");
+    LOG_ERR("Faled to get allocation size for tcti");
     return;
   }
+
+  tcti_ctx = calloc(1, size);
+  if (tcti_ctx == NULL) {
+    LOG_ERR("Faled to alloc space for tcti");
+    return;
+  }
+
+  // Zephyr_Init takes a device name as argument
+  ret = Tss2_Tcti_Zephyr_Init(tcti_ctx, &size, "tpm");
+  if (ret != TSS2_RC_SUCCESS) {
+    LOG_ERR("Failed to initialize tcti context");
+    free(tcti_ctx);
+    return;
+  }
+
+  // Esys_Initialize can also be called w/o tcti_ctx
+  // in that case it will create an internal tcti_ctx
+  // assuming the device name "tpm".
+  ret = Esys_Initialize(&esys_ctx, tcti_ctx, &abi_version);
+  if(ret != TPM2_RC_SUCCESS) {
+    LOG_ERR("Failed to initialize esys context");
+    free(tcti_ctx);
+    return;
+  }
+
   if(test_esys_get_random(esys_ctx) != EXIT_SUCCESS) {
     Esys_Finalize(&esys_ctx);
+    free(tcti_ctx);
     return;
   }
+
   if(test_esys_rsa_encrypt_decrypt(esys_ctx) != EXIT_SUCCESS) {
     Esys_Finalize(&esys_ctx);
+    free(tcti_ctx);
     return;
   }
+
   if(test_esys_ecdh_keygen(esys_ctx) != EXIT_SUCCESS) {
     Esys_Finalize(&esys_ctx);
+    free(tcti_ctx);
     return;
   }
+
   if(test_esys_certify(esys_ctx) != EXIT_SUCCESS) {
     Esys_Finalize(&esys_ctx);
+    free(tcti_ctx);
     return;
   }
+
   if(test_esys_verify_signature(esys_ctx) != EXIT_SUCCESS) {
     Esys_Finalize(&esys_ctx);
+    free(tcti_ctx);
     return;
   }
 
   Esys_Finalize(&esys_ctx);
+  free(tcti_ctx);
 
   return;
 }
