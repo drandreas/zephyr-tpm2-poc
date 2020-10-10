@@ -1,6 +1,9 @@
 #include <logging/log.h>
 #include <random/rand32.h>
 
+#include <fsl_port.h>
+#include <drivers/pinmux.h>
+
 #include <tss2/tss2_tctildr.h>
 #include <tss2/tss2_tcti_zephyr.h>
 #include <tss2/tss2_esys.h>
@@ -31,9 +34,17 @@ int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t 
     return 0;
 }
 
+// Change K64's CS-Pin to GPIO (SPI HW-CS releases pin to early)
+static int pinmux_reconfigure(const struct device *dev) {
+  pinmux_pin_set(device_get_binding(CONFIG_PINMUX_MCUX_PORTD_NAME),
+                 DT_SPI_DEV_CS_GPIOS_PIN(DT_NODELABEL(spi_tpm)),
+                 PORT_PCR_MUX(kPORT_MuxAsGpio));
+  return 0;
+}
+SYS_INIT(pinmux_reconfigure, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
+
 //=== copied from tpm2-tss/test/integration/esys-get-random.int.c =============
-int
-test_esys_get_random(ESYS_CONTEXT * esys_context)
+static int test_esys_get_random(ESYS_CONTEXT * esys_context)
 {
 
     TSS2_RC r;
@@ -219,8 +230,7 @@ test_esys_get_random(ESYS_CONTEXT * esys_context)
 }
 
 //=== copied from tpm2-tss/test/esys-rsa-encrypt-decrypt.int.c ================
-int
-test_esys_rsa_encrypt_decrypt(ESYS_CONTEXT * esys_context)
+static int test_esys_rsa_encrypt_decrypt(ESYS_CONTEXT * esys_context)
 {
     TSS2_RC r;
     ESYS_TR primaryHandle = ESYS_TR_NONE;
@@ -391,8 +401,7 @@ test_esys_rsa_encrypt_decrypt(ESYS_CONTEXT * esys_context)
 }
 
 //=== copied from tpm2-tss/test/integration/esys-ecdh-keygen.int.c ============
-int
-test_esys_ecdh_keygen(ESYS_CONTEXT * esys_context)
+static int test_esys_ecdh_keygen(ESYS_CONTEXT * esys_context)
 {
     TSS2_RC r;
     ESYS_TR eccHandle = ESYS_TR_NONE;
@@ -552,8 +561,7 @@ test_esys_ecdh_keygen(ESYS_CONTEXT * esys_context)
 }
 
 //=== copied from tpm2-tss/test/integration/esys-certify-creation.int.c =======
-int
-test_esys_certify(ESYS_CONTEXT * esys_context)
+static int test_esys_certify(ESYS_CONTEXT * esys_context)
 {
     TSS2_RC r;
     ESYS_TR signHandle = ESYS_TR_NONE;
@@ -699,8 +707,7 @@ test_esys_certify(ESYS_CONTEXT * esys_context)
 }
 
 //=== copied from tpm2-tss/test/integration/esys-verify-signature.int.c =======
-int
-test_esys_verify_signature(ESYS_CONTEXT * esys_context)
+static int test_esys_verify_signature(ESYS_CONTEXT * esys_context)
 {
     TSS2_RC r;
     ESYS_TR primaryHandle = ESYS_TR_NONE;
