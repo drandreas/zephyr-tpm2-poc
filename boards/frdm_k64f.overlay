@@ -11,12 +11,13 @@
 };
 
 &arduino_spi {
-	cs-gpios = <&arduino_header 16 0>;
+	cs-gpios = <&arduino_header 16 GPIO_ACTIVE_LOW>;
 
 	spi_tpm: tpm@0 {
 		compatible = "infineon,tpm";
 		reg = <0>;
 		label = "tpm";
 		spi-max-frequency = <100000000>;
+		reset-gpios = <&arduino_header 15 GPIO_ACTIVE_LOW>;
 	};
 };
