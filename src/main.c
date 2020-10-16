@@ -4,6 +4,11 @@
 #include <fsl_port.h>
 #include <drivers/pinmux.h>
 
+#if IS_ENABLED(CONFIG_FILE_SYSTEM)
+#include <fs/fs.h>
+#include <fs/littlefs.h>
+#endif
+
 #include <tss2/tss2_tctildr.h>
 #include <tss2/tss2_tcti_zephyr.h>
 #include <tss2/tss2_esys.h>
@@ -893,6 +898,17 @@ static int test_esys_verify_signature(ESYS_CONTEXT * esys_context)
 }
 
 //=== execute tests ===========================================================
+
+#if IS_ENABLED(CONFIG_FILE_SYSTEM)
+FS_LITTLEFS_DECLARE_DEFAULT_CONFIG(storage);
+static struct fs_mount_t mount_point = {
+  .type = FS_LITTLEFS,
+  .fs_data = &storage,
+  .storage_dev = (void *)FLASH_AREA_ID(storage),
+  .mnt_point = "/lfs",
+};
+#endif
+
 void main() {
   TSS2_RC ret = 0;
   size_t size = 0;
@@ -905,6 +921,18 @@ void main() {
     .tssLevel = 1,
     .tssVersion = 108,
   };
+
+#if IS_ENABLED(CONFIG_FILE_SYSTEM)
+  // Mount filesystem for X.509 certificates
+  ret = fs_mount(&mount_point);
+  if(ret < 0) {
+    LOG_ERR("Failed to mount id %u at %s: %d\n",
+            (unsigned int)mount_point.storage_dev,
+            log_strdup(mount_point.mnt_point),
+            ret);
+    return;
+  }
+#endif
 
   // Zephyr_Init is called w/o a ptr, it returns the tcti_ctx size
   ret = Tss2_Tcti_Zephyr_Init(NULL, &size, NULL);
@@ -921,7 +949,7 @@ void main() {
 
   // Zephyr_Init takes a device name as argument
   ret = Tss2_Tcti_Zephyr_Init(tcti_ctx, &size, "tpm");
-  if (ret != TSS2_RC_SUCCESS) {
+  if(ret != TSS2_RC_SUCCESS) {
     LOG_ERR("Failed to initialize tcti context");
     free(tcti_ctx);
     return;

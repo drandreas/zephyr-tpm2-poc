@@ -42,11 +42,29 @@ west flash
 ```
 
 ## Aproximate memory and flash size
+Values with bare minimum: (no log, fs, net, shell):
 ```
 Memory region         Used Size  Region Size  %age Used
-           FLASH:       92384 B         1 MB      8.81%
-            SRAM:       11776 B       192 KB      5.99%
+           FLASH:      112988 B         1 MB     10.78%
+            SRAM:        4552 B       192 KB      2.32%
         IDT_LIST:         104 B         2 KB      5.08%
+```
+
+Values with filesystem and network stack:
+```
+Memory region         Used Size  Region Size  %age Used
+           FLASH:      161748 B         1 MB     15.43%
+            SRAM:       38816 B       192 KB     19.74%
+        IDT_LIST:         152 B         2 KB      7.42%
+```
+
+Values with filesystem, network, logging and shell:
+```
+Memory region         Used Size  Region Size  %age Used
+           FLASH:      232584 B         1 MB     22.18%
+            SRAM:       58528 B       192 KB     29.77%
+        IDT_LIST:         216 B         2 KB     10.55%
+[531/531] Linking C executable zephyr/zephyr.elf
 ```
 Note: The heap size, a couple of kB, is not included in this numbers.
 

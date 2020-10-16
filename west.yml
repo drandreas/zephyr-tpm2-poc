@@ -25,6 +25,11 @@ manifest:
       revision: aef137b1af8aa7a0f43345c82459254b8832262e
       path: modules/crypto/mbedtls
 
+    - name: littlefs
+      remote: zephyrproject-rtos
+      revision: 9e4498d1c73009acd84bb36036ee5e2869112a6c
+      path: modules/fs/littlefs
+
     - name: zephyr
       remote: zephyrproject-rtos
       revision: 7a3b253ced7333f5c0269387a7f3ed1dee69739d
