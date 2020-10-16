@@ -70,16 +70,21 @@ Note: The heap size, a couple of kB, is not included in this numbers.
 
 ## Expected output
 ```
-*** Booting Zephyr OS build zephyr-v2.3.0-9-gd81be8fd9c3d  ***
-[00:00:00.261,000] <inf> tpm_tis_spi: TPM 2.0 (device-id 0x1b, rev-id 16)
-[00:00:00.415,000] <inf> tpm2: GetRandom Test Passed!
-[00:00:02.021,000] <inf> tpm2: GetRandom with session Test Passed!
-[00:00:02.021,000] <inf> tpm2: RSA key will be created.
-[00:01:48.318,000] <inf> tpm2: RSA-Encrypt-Decrypt Test Passed!
-[00:01:48.472,000] <inf> tpm2: ECC key will be created.
-[00:01:49.348,000] <inf> tpm2: ECDH-Keygen Test Passed!
-[00:01:49.348,000] <inf> tpm2: RSA key will be created.
-[00:02:01.214,000] <inf> tpm2: RSA Certify Test Passed!
-[00:02:01.214,000] <inf> tpm2: RSA key will be created.
-[00:02:40.250,000] <inf> tpm2: RSA Verify Test Passed!
+*** Booting Zephyr OS build zephyr-v2.4.0  ***
+[00:00:00.057,000] <inf> tpm_tis_spi: TPM 2.0 (device-id 0x1b, rev-id 22)
+[00:00:00.057,000] <inf> littlefs: LittleFS version 2.2, disk version 2.0
+[00:00:00.057,000] <inf> littlefs: FS at flash:0x80000 is 128 0x1000-byte blocks with 512 cycle
+[00:00:00.057,000] <inf> littlefs: sizes: rd 16 ; pr 16 ; ca 64 ; la 32
+[00:00:00.057,000] <inf> littlefs: /lfs mounted
+[00:00:00.074,000] <inf> tpm2: GetRandom Test Passed!
+[00:00:00.379,000] <inf> tpm2: GetRandom with session Test Passed!
+[00:00:00.379,000] <inf> tpm2: RSA key will be created.
+[00:00:03.001,000] <inf> eth_mcux: ETH_0 enabled 100M full-duplex mode.
+[00:00:58.984,000] <inf> tpm2: RSA-Encrypt-Decrypt Test Passed!
+[00:00:59.000,000] <inf> tpm2: ECC key will be created.
+[00:00:59.517,000] <inf> tpm2: ECDH-Keygen Test Passed!
+[00:00:59.517,000] <inf> tpm2: RSA key will be created.
+[00:02:04.777,000] <inf> tpm2: RSA Certify Test Passed!
+[00:02:04.777,000] <inf> tpm2: RSA key will be created.
+[00:02:46.805,000] <inf> tpm2: RSA Verify Test Passed!
 ```
