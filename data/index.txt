@@ -1,0 +1,2 @@
+V	300101000000Z		00	unknown	/CN=TPM-PoC CA
+V	300101000000Z		01	unknown	/CN=zephyr
