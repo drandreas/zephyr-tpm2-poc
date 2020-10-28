@@ -10,16 +10,20 @@ on top of ESAPI, therefore the ESAPI is sufficient. The glue code is work in
 progress but should be done in a couple of weeks.
 
 ## Hardware Requirements
-The PoC is tested with an [Infineon SLB 9670 TPM2.0 Arduino HAT](https://buyzero.de/products/arduino-adapter-for-letstrust-tpm)
-on an [NXP FRDM-K64F](https://docs.zephyrproject.org/latest/boards/arm/frdm_k64f/doc/index.html)
-but should work with any MCU - TPM 2.0 combination as long as the SPI-subsystem
-does not release the chip-select between consecutive transfers.
+The driver works with MCU that have SPI drivers that honor `SPI_HOLD_ON_CS` and
+`SPI_LOCK_ON` only. If the hardware IP block does not support `SPI_HOLD_ON_CS`
+it is recommendet to use gpio-cs control.
+
+The PoC is tested using an [Infineon SLB 9670 TPM2.0 Arduino HAT](https://buyzero.de/products/arduino-adapter-for-letstrust-tpm)
+on:
+ - [NXP FRDM-K64F](https://docs.zephyrproject.org/latest/boards/arm/frdm_k64f/doc/index.html)
+ - [nRF52 DK](https://docs.zephyrproject.org/latest/boards/arm/nrf52dk_nrf52832/doc/index.html)
 
 ## Software Requirements
-- [Zephyr](https://github.com/zephyrproject-rtos)
-- [TPM TIS](https://github.com/drandreas/tpm-tis-spi)
-- [TPM2 TSS](https://github.com/tpm2-software/tpm2-tss)
-- [TPM2 TSS Zephyr](https://github.com/drandreas/tpm2-tss-zephyr)
+ - [Zephyr](https://github.com/zephyrproject-rtos)
+ - [TPM TIS](https://github.com/drandreas/tpm-tis-spi)
+ - [TPM2 TSS](https://github.com/tpm2-software/tpm2-tss)
+ - [TPM2 TSS Zephyr](https://github.com/drandreas/tpm2-tss-zephyr)
 
 ## Checkout using WEST
 ```
@@ -29,10 +33,13 @@ west update
 ```
 ## Build and flash
 ```sh
-west build -p -b frdm_k64f zephyr-tpm2-poc
+~ $ west build -p -b frdm_k64f zephyr-tpm2-poc
 # or
-west build -p -b frdm_k64f zephyr-tpm2-poc -- -DCONF_FILE=prj.min.conf
-west flash
+~ $ west build -p -b frdm_k64f zephyr-tpm2-poc -- -DCONF_FILE=prj.min.conf
+# or
+~ $ west build -p -b nrf52dk_nrf52832 zephyr-tpm2-poc/
+# followed by
+~ $ west flash
 ```
 
 ## Aproximate memory and flash size

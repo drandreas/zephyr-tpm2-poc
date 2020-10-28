@@ -1,8 +1,10 @@
 #include <logging/log.h>
 #include <random/rand32.h>
 
+#if CONFIG_BOARD_FRDM_K64F
 #include <fsl_port.h>
 #include <drivers/pinmux.h>
+#endif
 
 #if IS_ENABLED(CONFIG_FILE_SYSTEM)
 #include <fs/fs.h>
@@ -78,6 +80,7 @@ int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t 
   return 0;
 }
 
+#if CONFIG_BOARD_FRDM_K64F
 // Change K64's CS-Pin to GPIO (SPI HW-CS releases pin to early)
 static int pinmux_reconfigure(const struct device *dev) {
   pinmux_pin_set(device_get_binding(CONFIG_PINMUX_MCUX_PORTD_NAME),
@@ -86,6 +89,7 @@ static int pinmux_reconfigure(const struct device *dev) {
   return 0;
 }
 SYS_INIT(pinmux_reconfigure, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
+#endif
 
 // Test basic TPM Functionality / Connectivity
 static int test_esys_get_random(ESYS_CONTEXT * esys_context) {

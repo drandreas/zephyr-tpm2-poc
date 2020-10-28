@@ -20,6 +20,16 @@ manifest:
       revision: 68bbdbdec1153355b14386d8f095058a496f66f4
       path: modules/hal/nxp
 
+    - name: segger
+      remote: zephyrproject-rtos
+      revision: 874d9e9696b00c09f9eeefe839028dc25fe44983
+      path: modules/debug/segger
+
+    - name: hal_nordic
+      remote: zephyrproject-rtos
+      revision: d8a6ea9695ddf792bb18bb6035c13b1daac5d79c
+      path: modules/hal/nordic
+
     - name: mbedtls
       remote: zephyrproject-rtos
       revision: aef137b1af8aa7a0f43345c82459254b8832262e
