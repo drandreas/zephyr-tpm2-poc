@@ -9,9 +9,11 @@
 #include <net/socket.h>
 #include <net/tls_credentials.h>
 
-#include <tss2/tss2_tctildr.h>
-#include <tss2/tss2_tcti_zephyr.h>
-#include <tss2/tss2_esys.h>
+#include <mbedtls/pem.h>
+#include <mbedtls/x509_csr.h>
+#include <mbedtls/tpm-utils.h>
+
+#include <stdio.h>
 
 // Loglevel of main function
 LOG_MODULE_REGISTER(tpm2, LOG_LEVEL_DBG);
@@ -32,25 +34,20 @@ static const char ca_certificate[] =
   "9h7syP1e17rXfIK7nfrRdu4IZjdGyIcgu3rM2C4bBuoDcqxZbbSlHiZDmoX6\r\n"
   "-----END CERTIFICATE-----\r\n";
 
-static const char server_certificate[] =
-  "-----BEGIN CERTIFICATE-----\r\n"
-  "MIIBljCCARugAwIBAgIBATAKBggqhkjOPQQDAjAVMRMwEQYDVQQDDApUUE0tUG9D\r\n"
-  "IENBMB4XDTIwMDEwMTAwMDAwMFoXDTMwMDEwMTAwMDAwMFowETEPMA0GA1UEAwwG\r\n"
-  "emVwaHlyMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEj6USJe3DUfOVqQNQBC0Y\r\n"
-  "U+xIQ9xFNvW/JPatncEWzepV2n/GF75tK02FrRzNuYmkgPqFLW+isCM8wyYlzJ3S\r\n"
-  "saNgMF4wCQYDVR0TBAIwADARBglghkgBhvhCAQEEBAMCBkAwHQYDVR0OBBYEFGnQ\r\n"
-  "aSjGgHIa22h/YgNjDinQqOmRMB8GA1UdIwQYMBaAFDFm5sVrTGo3eZQ9OjlU6qPZ\r\n"
-  "1bIKMAoGCCqGSM49BAMCA2kAMGYCMQCHKE/+rrr1LEsl9cBu53OHrkAyeDb2CGLx\r\n"
-  "NDuWFZaxNRH+5ANZYHvnnv6lPCoEX4cCMQC6tEEPuZO0d08VDeruPJSZxKDwt1pu\r\n"
-  "e5oRxdrnLu3Dhql0udsgGY9RY4kU2yLwfJg=\r\n"
-  "-----END CERTIFICATE-----\r\n";
+static const char server_certificate[] = "";
 
+// This Private key is needed to make Zephyr's secure socket code happy
+// The key can be arbitrary as long as it belongs to the P-256 curve.
 static const char private_key[] =
   "-----BEGIN PRIVATE KEY-----\r\n"
   "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQguFQIs7wj7F0TOF9p\r\n"
   "IjAO13TNoVz6uhgq7F0WBex6+yihRANCAASPpRIl7cNR85WpA1AELRhT7EhD3EU2\r\n"
   "9b8k9q2dwRbN6lXaf8YXvm0rTYWtHM25iaSA+oUtb6KwIzzDJiXMndKx\r\n"
   "-----END PRIVATE KEY-----\r\n";
+
+static const char tpm_blob[] = "";
+
+static tpm_keypair_t keypair;
 
 // Glue mbedTLS entropy source to K64 RNG (nxp,kinetis-rnga)
 int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t *olen ) {
@@ -65,6 +62,16 @@ int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t 
   return 0;
 }
 
+static int get_random(void* context, unsigned char *buffer, size_t buf_size) {
+  (void)context;
+
+  if(sys_csrand_get(buffer, buf_size) != 0) {
+    return -EIO;
+  }
+
+  return buf_size;
+}
+
 #if CONFIG_BOARD_FRDM_K64F
 // Change K64's CS-Pin to GPIO (SPI HW-CS releases pin to early)
 static int pinmux_reconfigure(const struct device *dev) {
@@ -76,75 +83,120 @@ static int pinmux_reconfigure(const struct device *dev) {
 SYS_INIT(pinmux_reconfigure, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
 #endif
 
-// Test basic TPM Functionality / Connectivity
-static int test_esys_get_random(ESYS_CONTEXT * esys_context) {
-  TSS2_RC ret;
-
-  TPM2B_DIGEST *randomBytes;
-  ret = Esys_GetRandom(esys_context, ESYS_TR_NONE, 
-                       ESYS_TR_NONE, ESYS_TR_NONE,
-                       48, &randomBytes);
-  if (ret != TPM2_RC_SUCCESS) {
-    LOG_ERR("GetRandom FAILED! Response Code : 0x%x", ret);
-    return EXIT_FAILURE;
-  } else {
-    Esys_Free(randomBytes);
-    LOG_INF("GetRandom Test Passed!");
-    return 0;
-  }
-}
 
 // Main Application
 void main() {
-  TSS2_RC ret = 0;
-  size_t size = 0;
-  TSS2_TCTI_CONTEXT *tcti_ctx = NULL;
-  ESYS_CONTEXT *esys_ctx = NULL;
+  int ret = 0;
 
-  TSS2_ABI_VERSION abi_version = {
-    .tssCreator = 1,
-    .tssFamily = 2,
-    .tssLevel = 1,
-    .tssVersion = 108,
-  };
+  if(strlen(server_certificate) == 0 || strlen(tpm_blob) == 0) {
+    puts("Server CRT or TPM Blob not compiled in, Creating CSR");
 
+    ret = tpm_generate_ec_keypair(&keypair);
+    if(ret != 0) {
+      LOG_ERR("Failed to generate ec keypair");
+      return;
+    }
 
-  // Zephyr_Init is called w/o a ptr, it returns the tcti_ctx size
-  ret = Tss2_Tcti_Zephyr_Init(NULL, &size, NULL);
-  if(ret != TPM2_RC_SUCCESS) {
-    LOG_ERR("Faled to get allocation size for tcti");
+    // Output TPM Blob
+    char der_buf[512];
+    size_t der_len = sizeof(der_buf);
+    ret = tpm_store_keypair_der(&keypair, der_buf, &der_len);
+    if(ret < 0) {
+      LOG_ERR("Failed to store ec keypair");
+      return;
+    }
+
+    char pem_buf[512];
+    memset(pem_buf, 0, sizeof(pem_buf));
+    size_t pem_len = 0;
+    char* p = &der_buf[0];
+    ret = mbedtls_pem_write_buffer("-----BEGIN TSS2 PRIVATE KEY-----\n",
+                                   "-----END TSS2 PRIVATE KEY-----\n",
+                                   p, der_len,
+                                   pem_buf, sizeof(pem_buf), &pem_len);
+    if(ret != 0)
+    {
+      LOG_ERR("Failed to generate tpm data");
+      return;
+    }
+    puts("Please change the source code and assign the PEM below to \"tpm_blob[]\"");
+    puts(pem_buf);
+
+    // Create and output CSR
+    tpm_set_ec_keypair(&keypair);
+    mbedtls_pk_context pk_ctx;
+    mbedtls_pk_init(&pk_ctx);
+
+    ret = tpm_export_pubkey(&keypair.pub_key, &pk_ctx);
+    if(ret != 0) {
+      LOG_ERR("Failed to export pubkey");
+      return;
+    }
+
+    static mbedtls_x509write_csr csr_ctx;
+    mbedtls_x509write_csr_init(&csr_ctx);
+    mbedtls_x509write_csr_set_key(&csr_ctx, &pk_ctx);
+    mbedtls_x509write_csr_set_md_alg(&csr_ctx, MBEDTLS_MD_SHA256);
+
+    ret = mbedtls_x509write_csr_set_subject_name(&csr_ctx, "CN=zephyr");
+    if(ret != 0) {
+      LOG_ERR("Failed to set subject name");
+      return;
+    }
+
+    ret = mbedtls_x509write_csr_set_key_usage(&csr_ctx, MBEDTLS_X509_KU_DIGITAL_SIGNATURE
+                                                      | MBEDTLS_X509_KU_NON_REPUDIATION
+                                                      | MBEDTLS_X509_KU_KEY_AGREEMENT);
+    if(ret != 0) {
+      LOG_ERR("Failed to set key usage");
+      return;
+    }
+
+    // Output CSR
+    if(mbedtls_x509write_csr_pem(&csr_ctx,
+                                 &pem_buf[0],
+                                 sizeof(pem_buf),
+                                 get_random,
+                                 NULL) != 0)
+    {
+      LOG_ERR("Failed to generate csr");
+      return;
+    }
+
+    puts("Please sign the PEM on your desktop and assign the certificate to \"server_certificate[]\"");
+    puts("Hint: zephyr-tpm2-poc/data");
+    puts("      openssle ca -config openssl.cnf -startdate 200101000000Z -enddate 300101000000Z -in /dev/stdin");
+    puts(pem_buf);
+    mbedtls_x509write_csr_free(&csr_ctx);
+    mbedtls_pk_free(&pk_ctx);
+
     return;
   }
 
-  tcti_ctx = calloc(1, size);
-  if (tcti_ctx == NULL) {
-    LOG_ERR("Faled to alloc space for tcti");
+  // Load previewsly created TPM Blob
+  // Note: The Blob  is compiled in - for the sake of simplicity, however the Blob is not interchangeable between TPMs
+  LOG_INF("Preparing TPM Blob for echo_server...");
+  struct mbedtls_pem_context pem;
+  mbedtls_pem_init(&pem);
+  size_t file_index = 0;
+  ret = mbedtls_pem_read_buffer(&pem,
+                                "-----BEGIN TSS2 PRIVATE KEY-----",
+                                "-----END TSS2 PRIVATE KEY-----",
+                                (const unsigned char*)tpm_blob,
+                                NULL, 0,
+                                &file_index);
+  if(ret != 0) {
+    LOG_ERR("Failed to read TPM blob");
     return;
   }
 
-  // Zephyr_Init takes a device name as argument
-  ret = Tss2_Tcti_Zephyr_Init(tcti_ctx, &size, "tpm");
-  if(ret != TSS2_RC_SUCCESS) {
-    LOG_ERR("Failed to initialize tcti context");
-    free(tcti_ctx);
+  ret = tpm_load_keypair_der(&keypair, pem.buf, pem.buflen);
+  if(ret != 0) {
+    LOG_ERR("Failed to parse TPM blob");
     return;
   }
-
-  // Esys_Initialize can also be called w/o tcti_ctx
-  // in that case it will create an internal tcti_ctx
-  // assuming the device name "tpm".
-  ret = Esys_Initialize(&esys_ctx, tcti_ctx, &abi_version);
-  if(ret != TPM2_RC_SUCCESS) {
-    LOG_ERR("Failed to initialize esys context");
-    free(tcti_ctx);
-    return;
-  }
-
-  if(test_esys_get_random(esys_ctx) != EXIT_SUCCESS) {
-    Esys_Finalize(&esys_ctx);
-    free(tcti_ctx);
-    return;
-  }
+  mbedtls_pem_free(&pem);
+  tpm_set_ec_keypair(&keypair);
 
   // "Wait" for Ethernet Link
   k_sleep(K_SECONDS(5));
@@ -260,8 +312,6 @@ void main() {
   tls_credential_delete(SERVER_CERTIFICATE_TAG, TLS_CREDENTIAL_CA_CERTIFICATE);
   tls_credential_delete(SERVER_CERTIFICATE_TAG, TLS_CREDENTIAL_SERVER_CERTIFICATE);
   tls_credential_delete(SERVER_CERTIFICATE_TAG, TLS_CREDENTIAL_PRIVATE_KEY);
-  Esys_Finalize(&esys_ctx);
-  free(tcti_ctx);
 
   return;
 }

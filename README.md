@@ -6,8 +6,7 @@ This repo will demonstrates the use of a TPM 2.0 for server authentication on
 Enhanced System API (ESAPI), since the Feature API (FAPI) adds additional
 dependencies to JSON-C and OpenSSL. Moreover, the
 [tpm2-tools](https://github.com/tpm2-software/tpm2-tools) are also implemented
-on top of ESAPI, therefore the ESAPI is sufficient. The glue code is work in
-progress but should be done in a couple of weeks.
+on top of ESAPI, therefore the ESAPI is sufficient.
 
 ## Hardware Requirements
 The driver works with MCU that have SPI drivers that honor `SPI_HOLD_ON_CS` and
@@ -46,33 +45,55 @@ west update
 Stripped down image (prj.min.conf):
 ```
 Memory region         Used Size  Region Size  %age Used
-           FLASH:      185408 B         1 MB     17.68%
-            SRAM:       57088 B       192 KB     29.04%
+           FLASH:      206200 B         1 MB     19.66%
+            SRAM:         60 KB       192 KB     31.25%
         IDT_LIST:         152 B         2 KB      7.42%
 ```
 
 Full image (default prj.conf)
 ```
 Memory region         Used Size  Region Size  %age Used
-           FLASH:      298164 B         1 MB     28.44%
-            SRAM:       81408 B       192 KB     41.41%
+           FLASH:      293132 B         1 MB     27.96%
+            SRAM:       74160 B       192 KB     37.72%
         IDT_LIST:         216 B         2 KB     10.55%
 ```
 Note: The heap size, a couple of kB, is not included in this numbers.
 
 ## Test Server
-Target Output:
+Target output during inital boot:
+```
+*** Booting Zephyr OS build zephyr-v2.4.0  ***
+Server CRT or TPM Blob not compiled in, Creating CSR
+Please change the source code and assign the PEM below to "tpm_blob[]"
+-----BEGIN TSS2 PRIVATE KEY-----
+MIHNBgdngQUKAQMAoAMBAf8CAQEEWABWACMACwAEBHIAAAAQABAAAwAQACA+QUDa
+4kSqSBZCOsYowd+lHNqZWxb3waDtd3wICwigcQAgO4u8jri79avPyOXm9fwUnuEo
+/ei+UKQ4vXCMDjowCdAEYABeACCA6d13/ZdvCtVOAfqyD73gmYYCuyZI/zJLIRTw
+uAWE4QAQMPQPyl7V5MFH7MbTZkV6YrhcQyK473XR6MALh4NcjAQYvV6AQPyXLyon
+eQhtw1dV19WP5zxdSax2IQ==
+-----END TSS2 PRIVATE KEY-----
+
+Please sign the PEM on your desktop and assign the certificate to "server_certificate[]"
+Hint: zephyr-tpm2-poc/data
+      openssle ca -config openssl.cnf -startdate 200101000000Z -enddate 300101000000Z -in /dev/stdin
+
+-----BEGIN CERTIFICATE REQUEST-----
+MIHsMIGRAgEAMBExDzANBgNVBAMMBnplcGh5cjBZMBMGByqGSM49AgEGCCqGSM49
+AwEHA0IABD5BQNriRKpIFkI6xijB36Uc2plbFvfBoO13fAgLCKBxO4u8jri79avP
+yOXm9fwUnuEo/ei+UKQ4vXCMDjowCdCgHjAcBgkqhkiG9w0BCQ4xDzANMAsGA1Ud
+DwQEAwIDyDAMBggqhkjOPQQDAgUAA0gAMEUCIBoxjDl7MsLxkwXzLUV2tmUdxpu8
+4owovJfUCCgdwoz9AiEA7oc3AFcvblYO6VSpGNagvymnVqH2gAIAh5yBQDmhzr4=
+-----END CERTIFICATE REQUEST-----
+```
+
+Target output after CRT and TPM Blob have been assigned (in source code):
 ```
 *** Booting Zephyr OS build zephyr-v2.4.0  ***
 [00:00:00.060,000] <inf> tpm_tis_spi: TPM 2.0 (device-id 0x1b, rev-id 22)
-[00:00:00.060,000] <inf> littlefs: LittleFS version 2.2, disk version 2.0
-[00:00:00.060,000] <inf> littlefs: FS at FLASH_CTRL:0x80000 is 128 0x1000-byte blocks with 512 cycle
-[00:00:00.060,000] <inf> littlefs: sizes: rd 16 ; pr 16 ; ca 64 ; la 32
-[00:00:00.060,000] <inf> littlefs: /lfs mounted
-[00:00:00.077,000] <inf> tpm2: GetRandom Test Passed!
+[00:00:00.060,000] <inf> tpm2: Preparing TPM Blob for echo_server...
 [00:00:03.001,000] <inf> eth_mcux: ETH_0 enabled 100M full-duplex mode.
-[00:00:05.077,000] <inf> tpm2: My IPv6 Address: fe80::1234:5678]
-[00:00:05.078,000] <inf> tpm2: Waiting for TCP connection on port 4433
+[00:00:05.061,000] <inf> tpm2: My IPv6 Address: [fe80::1234:5678]
+[00:00:05.061,000] <inf> tpm2: Waiting for TCP connection on port 4433
 ```
 
 Connect from a Linux/Mac/Windows using openssl (you need to adjust the scope ID to match your outgoing interface):
