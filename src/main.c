@@ -6,11 +6,6 @@
 #include <drivers/pinmux.h>
 #endif
 
-#if IS_ENABLED(CONFIG_FILE_SYSTEM)
-#include <fs/fs.h>
-#include <fs/littlefs.h>
-#endif
-
 #include <net/socket.h>
 #include <net/tls_credentials.h>
 
@@ -20,16 +15,6 @@
 
 // Loglevel of main function
 LOG_MODULE_REGISTER(tpm2, LOG_LEVEL_DBG);
-
-#if IS_ENABLED(CONFIG_FILE_SYSTEM)
-FS_LITTLEFS_DECLARE_DEFAULT_CONFIG(storage);
-static struct fs_mount_t mount_point = {
-  .type = FS_LITTLEFS,
-  .fs_data = &storage,
-  .storage_dev = (void *)FLASH_AREA_ID(storage),
-  .mnt_point = "/lfs",
-};
-#endif
 
 // Certificate and Key
 #define SERVER_CERTIFICATE_TAG 1
@@ -123,17 +108,6 @@ void main() {
     .tssVersion = 108,
   };
 
-#if IS_ENABLED(CONFIG_FILE_SYSTEM)
-  // Mount filesystem for X.509 certificates
-  ret = fs_mount(&mount_point);
-  if(ret < 0) {
-    LOG_ERR("Failed to mount id %u at %s: %d\n",
-            (unsigned int)mount_point.storage_dev,
-            log_strdup(mount_point.mnt_point),
-            ret);
-    return;
-  }
-#endif
 
   // Zephyr_Init is called w/o a ptr, it returns the tcti_ctx size
   ret = Tss2_Tcti_Zephyr_Init(NULL, &size, NULL);
