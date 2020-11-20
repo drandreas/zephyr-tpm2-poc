@@ -1,15 +1,18 @@
 # Proof of Concept: Zepher TPM2 Software Stack
 
 ## Overview
-This repo will demonstrates the use of a TPM 2.0 for server authentication on
+This repo demonstrates the use of a TPM 2.0 for server authentication on
 [Zephyr](https://www.zephyrproject.org). The PoC is implemented on top of the
 Enhanced System API (ESAPI), since the Feature API (FAPI) adds additional
 dependencies to JSON-C and OpenSSL. Moreover, the
 [tpm2-tools](https://github.com/tpm2-software/tpm2-tools) are also implemented
 on top of ESAPI, therefore the ESAPI is sufficient.
 
+The main has 2 code path. This first will generate an CSR on every boot.
+The second will launch an TLS 1.2 echo server on port 4433 (IPv6).
+
 ## Hardware Requirements
-The driver works with MCU that have SPI drivers that honor `SPI_HOLD_ON_CS` and
+The driver works with MCUs that have SPI drivers that honor `SPI_HOLD_ON_CS` and
 `SPI_LOCK_ON` only. If the hardware IP block does not support `SPI_HOLD_ON_CS`
 it is recommendet to use gpio-cs control.
 
