@@ -62,6 +62,7 @@ int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t 
   return 0;
 }
 
+#if CONFIG_CONSOLE
 static int get_random(void* context, unsigned char *buffer, size_t buf_size) {
   (void)context;
 
@@ -71,6 +72,7 @@ static int get_random(void* context, unsigned char *buffer, size_t buf_size) {
 
   return buf_size;
 }
+#endif
 
 #if CONFIG_BOARD_FRDM_K64F
 // Change K64's CS-Pin to GPIO (SPI HW-CS releases pin to early)
@@ -83,12 +85,12 @@ static int pinmux_reconfigure(const struct device *dev) {
 SYS_INIT(pinmux_reconfigure, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
 #endif
 
-
 // Main Application
 void main() {
   int ret = 0;
 
   if(strlen(server_certificate) == 0 || strlen(tpm_blob) == 0) {
+#if CONFIG_CONSOLE
     puts("Server CRT or TPM Blob not compiled in, Creating CSR");
 
     ret = tpm_generate_ec_keypair(&keypair);
@@ -164,16 +166,17 @@ void main() {
     }
 
     puts("Please sign the PEM on your desktop and assign the certificate to \"server_certificate[]\"");
-    puts("Hint: zephyr-tpm2-poc/data");
-    puts("      openssle ca -config openssl.cnf -startdate 200101000000Z -enddate 300101000000Z -in /dev/stdin");
+    puts("Hint: cd zephyr-tpm2-poc/data");
+    puts("      openssl ca -config openssl.cnf -startdate 200101000000Z -enddate 300101000000Z -in /dev/stdin");
     puts(pem_buf);
     mbedtls_x509write_csr_free(&csr_ctx);
     mbedtls_pk_free(&pk_ctx);
+#endif
 
     return;
   }
 
-  // Load previewsly created TPM Blob
+  // Load previously created TPM Blob
   // Note: The Blob  is compiled in - for the sake of simplicity, however the Blob is not interchangeable between TPMs
   LOG_INF("Preparing TPM Blob for echo_server...");
   struct mbedtls_pem_context pem;

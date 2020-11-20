@@ -45,7 +45,7 @@ west update
 Stripped down image (prj.min.conf):
 ```
 Memory region         Used Size  Region Size  %age Used
-           FLASH:      206200 B         1 MB     19.66%
+           FLASH:      197000 B         1 MB     18.79%
             SRAM:         60 KB       192 KB     31.25%
         IDT_LIST:         152 B         2 KB      7.42%
 ```
@@ -74,8 +74,8 @@ eQhtw1dV19WP5zxdSax2IQ==
 -----END TSS2 PRIVATE KEY-----
 
 Please sign the PEM on your desktop and assign the certificate to "server_certificate[]"
-Hint: zephyr-tpm2-poc/data
-      openssle ca -config openssl.cnf -startdate 200101000000Z -enddate 300101000000Z -in /dev/stdin
+Hint: cd zephyr-tpm2-poc/data
+      openssl ca -config openssl.cnf -startdate 200101000000Z -enddate 300101000000Z -in /dev/stdin
 
 -----BEGIN CERTIFICATE REQUEST-----
 MIHsMIGRAgEAMBExDzANBgNVBAMMBnplcGh5cjBZMBMGByqGSM49AgEGCCqGSM49
