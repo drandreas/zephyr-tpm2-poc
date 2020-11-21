@@ -19,7 +19,7 @@ it is recommendet to use gpio-cs control.
 The PoC is tested using an [Infineon SLB 9670 TPM2.0 Arduino HAT](https://buyzero.de/products/arduino-adapter-for-letstrust-tpm)
 on:
  - [NXP FRDM-K64F](https://docs.zephyrproject.org/latest/boards/arm/frdm_k64f/doc/index.html)
- - [nRF52 DK](https://docs.zephyrproject.org/latest/boards/arm/nrf52dk_nrf52832/doc/index.html)
+ - [nRF52 DK](https://docs.zephyrproject.org/latest/boards/arm/nrf52dk_nrf52832/doc/index.html) (has no ethernet interface)
 
 ## Software Requirements
  - [Zephyr](https://github.com/zephyrproject-rtos)
