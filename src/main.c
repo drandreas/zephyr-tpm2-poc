@@ -47,8 +47,6 @@ static const char private_key[] =
 
 static const char tpm_blob[] = "";
 
-static tpm_keypair_t keypair;
-
 // Glue mbedTLS entropy source to K64 RNG (nxp,kinetis-rnga)
 int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t *olen ) {
   (void)data;
@@ -62,7 +60,6 @@ int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t 
   return 0;
 }
 
-#if CONFIG_CONSOLE
 static int get_random(void* context, unsigned char *buffer, size_t buf_size) {
   (void)context;
 
@@ -72,7 +69,6 @@ static int get_random(void* context, unsigned char *buffer, size_t buf_size) {
 
   return buf_size;
 }
-#endif
 
 #if CONFIG_BOARD_FRDM_K64F
 // Change K64's CS-Pin to GPIO (SPI HW-CS releases pin to early)
@@ -85,96 +81,94 @@ static int pinmux_reconfigure(const struct device *dev) {
 SYS_INIT(pinmux_reconfigure, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
 #endif
 
-// Main Application
-void main() {
+static void setup() {
   int ret = 0;
 
-  if(strlen(server_certificate) == 0 || strlen(tpm_blob) == 0) {
-#if CONFIG_CONSOLE
-    puts("Server CRT or TPM Blob not compiled in, Creating CSR");
+  puts("Server CRT or TPM Blob not compiled in, Creating CSR");
 
-    ret = tpm_generate_ec_keypair(&keypair);
-    if(ret != 0) {
-      LOG_ERR("Failed to generate ec keypair");
-      return;
-    }
-
-    // Output TPM Blob
-    char der_buf[512];
-    size_t der_len = sizeof(der_buf);
-    ret = tpm_store_keypair_der(&keypair, der_buf, &der_len);
-    if(ret < 0) {
-      LOG_ERR("Failed to store ec keypair");
-      return;
-    }
-
-    char pem_buf[512];
-    memset(pem_buf, 0, sizeof(pem_buf));
-    size_t pem_len = 0;
-    char* p = &der_buf[0];
-    ret = mbedtls_pem_write_buffer("-----BEGIN TSS2 PRIVATE KEY-----\n",
-                                   "-----END TSS2 PRIVATE KEY-----\n",
-                                   p, der_len,
-                                   pem_buf, sizeof(pem_buf), &pem_len);
-    if(ret != 0)
-    {
-      LOG_ERR("Failed to generate tpm data");
-      return;
-    }
-    puts("Please change the source code and assign the PEM below to \"tpm_blob[]\"");
-    puts(pem_buf);
-
-    // Create and output CSR
-    tpm_set_ec_keypair(&keypair);
-    mbedtls_pk_context pk_ctx;
-    mbedtls_pk_init(&pk_ctx);
-
-    ret = tpm_export_pubkey(&keypair.pub_key, &pk_ctx);
-    if(ret != 0) {
-      LOG_ERR("Failed to export pubkey");
-      return;
-    }
-
-    static mbedtls_x509write_csr csr_ctx;
-    mbedtls_x509write_csr_init(&csr_ctx);
-    mbedtls_x509write_csr_set_key(&csr_ctx, &pk_ctx);
-    mbedtls_x509write_csr_set_md_alg(&csr_ctx, MBEDTLS_MD_SHA256);
-
-    ret = mbedtls_x509write_csr_set_subject_name(&csr_ctx, "CN=zephyr");
-    if(ret != 0) {
-      LOG_ERR("Failed to set subject name");
-      return;
-    }
-
-    ret = mbedtls_x509write_csr_set_key_usage(&csr_ctx, MBEDTLS_X509_KU_DIGITAL_SIGNATURE
-                                                      | MBEDTLS_X509_KU_NON_REPUDIATION
-                                                      | MBEDTLS_X509_KU_KEY_AGREEMENT);
-    if(ret != 0) {
-      LOG_ERR("Failed to set key usage");
-      return;
-    }
-
-    // Output CSR
-    if(mbedtls_x509write_csr_pem(&csr_ctx,
-                                 &pem_buf[0],
-                                 sizeof(pem_buf),
-                                 get_random,
-                                 NULL) != 0)
-    {
-      LOG_ERR("Failed to generate csr");
-      return;
-    }
-
-    puts("Please sign the PEM on your desktop and assign the certificate to \"server_certificate[]\"");
-    puts("Hint: cd zephyr-tpm2-poc/data");
-    puts("      openssl ca -config openssl.cnf -startdate 200101000000Z -enddate 300101000000Z -in /dev/stdin");
-    puts(pem_buf);
-    mbedtls_x509write_csr_free(&csr_ctx);
-    mbedtls_pk_free(&pk_ctx);
-#endif
-
+  ret = tpm_generate_ec_keypair(tpm_get_ec_keypair_ptr());
+  if(ret != 0) {
+    LOG_ERR("Failed to generate ec keypair");
     return;
   }
+
+  // Output TPM Blob
+  char der_buf[512];
+  size_t der_len = sizeof(der_buf);
+  ret = tpm_store_keypair_der(tpm_get_ec_keypair_ptr(), der_buf, &der_len);
+  if(ret < 0) {
+    LOG_ERR("Failed to store ec keypair");
+    return;
+  }
+
+  char pem_buf[512];
+  memset(pem_buf, 0, sizeof(pem_buf));
+  size_t pem_len = 0;
+  char* p = &der_buf[0];
+  ret = mbedtls_pem_write_buffer("-----BEGIN TSS2 PRIVATE KEY-----\n",
+                                 "-----END TSS2 PRIVATE KEY-----\n",
+                                 p, der_len,
+                                 pem_buf, sizeof(pem_buf), &pem_len);
+  if(ret != 0)
+  {
+    LOG_ERR("Failed to generate tpm data");
+    return;
+  }
+  puts("Please change the source code and assign the PEM below to \"tpm_blob[]\"");
+  puts(pem_buf);
+
+  // Create and output CSR
+  mbedtls_pk_context pk_ctx;
+  mbedtls_pk_init(&pk_ctx);
+
+  ret = tpm_export_pubkey(&tpm_get_ec_keypair_ptr()->pub_key, &pk_ctx);
+  if(ret != 0) {
+    LOG_ERR("Failed to export pubkey");
+    return;
+  }
+
+  mbedtls_x509write_csr csr_ctx;
+  mbedtls_x509write_csr_init(&csr_ctx);
+  mbedtls_x509write_csr_set_key(&csr_ctx, &pk_ctx);
+  mbedtls_x509write_csr_set_md_alg(&csr_ctx, MBEDTLS_MD_SHA256);
+
+  ret = mbedtls_x509write_csr_set_subject_name(&csr_ctx, "CN=zephyr");
+  if(ret != 0) {
+    LOG_ERR("Failed to set subject name");
+    return;
+  }
+
+  ret = mbedtls_x509write_csr_set_key_usage(&csr_ctx, MBEDTLS_X509_KU_DIGITAL_SIGNATURE
+                                                    | MBEDTLS_X509_KU_NON_REPUDIATION
+                                                    | MBEDTLS_X509_KU_KEY_AGREEMENT);
+  if(ret != 0) {
+    LOG_ERR("Failed to set key usage");
+    return;
+  }
+
+  // Output CSR
+  if(mbedtls_x509write_csr_pem(&csr_ctx,
+                               &pem_buf[0],
+                               sizeof(pem_buf),
+                               get_random,
+                               NULL) != 0)
+  {
+    LOG_ERR("Failed to generate csr");
+    return;
+  }
+
+  puts("Please sign the PEM on your desktop and assign the certificate to \"server_certificate[]\"");
+  puts("Hint: cd zephyr-tpm2-poc/data");
+  puts("      openssl ca -config openssl.cnf -startdate 200101000000Z -enddate 300101000000Z -in /dev/stdin");
+  puts(pem_buf);
+  mbedtls_x509write_csr_free(&csr_ctx);
+  mbedtls_pk_free(&pk_ctx);
+
+  return;
+}
+
+static void run() {
+  int ret = 0;
 
   // Load previously created TPM Blob
   // Note: The Blob  is compiled in - for the sake of simplicity, however the Blob is not interchangeable between TPMs
@@ -193,24 +187,27 @@ void main() {
     return;
   }
 
-  ret = tpm_load_keypair_der(&keypair, pem.buf, pem.buflen);
+  ret = tpm_load_keypair_der(tpm_get_ec_keypair_ptr(), pem.buf, pem.buflen);
   if(ret != 0) {
     LOG_ERR("Failed to parse TPM blob");
     return;
   }
   mbedtls_pem_free(&pem);
-  tpm_set_ec_keypair(&keypair);
 
   // "Wait" for Ethernet Link
   k_sleep(K_SECONDS(5));
 
   // Output IPv6 Address
-  struct net_if* netif = net_if_lookup_by_dev(device_get_binding("ETH_0"));
+  struct net_if* netif = net_if_get_default();
+  if(netif == NULL) {
+    LOG_ERR("Failed to get default netowrk interface");
+    return;
+  }
   struct net_if_ipv6 *ipv6 = netif->config.ip.ipv6;
   for (size_t i = 0; ipv6 && i < NET_IF_MAX_IPV6_ADDR; i++) {
     struct net_if_addr *addr = &ipv6->unicast[i];
     if(addr->is_used) {
-      static char buf[NET_IPV6_ADDR_LEN];
+      char buf[NET_IPV6_ADDR_LEN];
       net_addr_ntop(AF_INET6, &addr->address.in6_addr, buf, NET_IPV6_ADDR_LEN);
       LOG_INF("My IPv6 Address: [%s]", log_strdup(buf));
     }
@@ -317,4 +314,17 @@ void main() {
   tls_credential_delete(SERVER_CERTIFICATE_TAG, TLS_CREDENTIAL_PRIVATE_KEY);
 
   return;
+}
+
+void main() {
+  if(strlen(server_certificate) == 0 || strlen(tpm_blob) == 0) {
+    setup();
+  } else {
+    run();
+  }
+
+  // Keep thread alive so stack size can be measured
+  while(true) {
+    k_sleep(K_SECONDS(5));
+  }
 }
