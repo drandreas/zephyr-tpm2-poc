@@ -73,7 +73,7 @@ static int get_random(void* context, unsigned char *buffer, size_t buf_size) {
 #if CONFIG_BOARD_FRDM_K64F
 // Change K64's CS-Pin to GPIO (SPI HW-CS releases pin to early)
 static int pinmux_reconfigure(const struct device *dev) {
-  pinmux_pin_set(device_get_binding(CONFIG_PINMUX_MCUX_PORTD_NAME),
+  pinmux_pin_set(device_get_binding(DT_LABEL(DT_NODELABEL(portd))),
                  DT_SPI_DEV_CS_GPIOS_PIN(DT_NODELABEL(spi_tpm)),
                  PORT_PCR_MUX(kPORT_MuxAsGpio));
   return 0;

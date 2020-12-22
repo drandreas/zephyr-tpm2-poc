@@ -17,43 +17,43 @@ manifest:
 
     - name: hal_nxp
       remote: zephyrproject-rtos
-      revision: 68bbdbdec1153355b14386d8f095058a496f66f4
+      revision: 56915d2942a3af7205b3c4991a8b87e915de7f59
       path: modules/hal/nxp
 
     - name: segger
       remote: zephyrproject-rtos
-      revision: 874d9e9696b00c09f9eeefe839028dc25fe44983
+      revision: 38c79a447e4a47d413b4e8d34448316a5cece77c
       path: modules/debug/segger
 
     - name: hal_nordic
       remote: zephyrproject-rtos
-      revision: d8a6ea9695ddf792bb18bb6035c13b1daac5d79c
+      revision: 8e132fee9794fcc8b809f3d7479b17031c156317
       path: modules/hal/nordic
 
     - name: mbedtls
       remote: zephyrproject-rtos
-      revision: aef137b1af8aa7a0f43345c82459254b8832262e
+      revision: 13cf2e52024a144ecee9f37680681760a85febab
       path: modules/crypto/mbedtls
 
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: 7a3b253ced7333f5c0269387a7f3ed1dee69739d
+      revision: 4ca7942411f70f0caee6cd872ab14200f88b221b
       path: zephyr
       west-commands: scripts/west-commands.yml
 
     - name: tpm-tis-spi
       remote: anticat
-      revision: master
+      revision: e633187983c8bb0ab4f07b6036c993a4ddb81176
       path: modules/drv/tpm-tis-spi
 
     - name: tpm2-tss
       remote: tpm2-software
-      revision:  master
+      revision:  9eca9f9ee12bf5f4a37b5413feb8e85bff1aa7a7
       path: modules/lib/tpm2-tss/import
 
     - name: tpm2-tss-zephyr
       remote: anticat
-      revision: master
+      revision: fa28200056c595d32cf00ab1d184914b41faa103
       path: modules/lib/tpm2-tss
 
   self:
