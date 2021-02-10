@@ -12,12 +12,12 @@ manifest:
   projects:
     - name: cmsis
       remote: zephyrproject-rtos
-      revision: 542b2296e6d515b265e25c6b7208e8fea3014f90
+      revision: c3bd2094f92d574377f7af2aec147ae181aa5f8e
       path: modules/hal/cmsis
 
     - name: hal_nxp
       remote: zephyrproject-rtos
-      revision: 56915d2942a3af7205b3c4991a8b87e915de7f59
+      revision: b916bca1d5976b0157be80b326e3bb46ef605286
       path: modules/hal/nxp
 
     - name: segger
@@ -27,17 +27,17 @@ manifest:
 
     - name: hal_nordic
       remote: zephyrproject-rtos
-      revision: 8e132fee9794fcc8b809f3d7479b17031c156317
+      revision: f0d54d8449acbee49b3cebcef0e3e56640c50277
       path: modules/hal/nordic
 
     - name: mbedtls
       remote: zephyrproject-rtos
-      revision: 13cf2e52024a144ecee9f37680681760a85febab
+      revision: 24d84ecff195fb15c889d9046e44e4804d626c67
       path: modules/crypto/mbedtls
 
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: 4ca7942411f70f0caee6cd872ab14200f88b221b
+      revision: 1a0156d68b6b2c6a12b10d81f5ab03c2bd4030fa
       path: zephyr
       west-commands: scripts/west-commands.yml
 
@@ -48,7 +48,7 @@ manifest:
 
     - name: tpm2-tss
       remote: tpm2-software
-      revision:  9eca9f9ee12bf5f4a37b5413feb8e85bff1aa7a7
+      revision: a5c54dfb672f83ca2a61e1c6f96160eb7312b93d
       path: modules/lib/tpm2-tss/import
 
     - name: tpm2-tss-zephyr
